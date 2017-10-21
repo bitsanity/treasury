@@ -24,7 +24,7 @@ contract owned
     _;
   }
 
-  function setNewTreasurer( address newTreasurer ) onlyTreasurer {
+  function setTreasurer( address newTreasurer ) onlyTreasurer {
     treasurer = newTreasurer;
   }
 
@@ -33,7 +33,18 @@ contract owned
   }
 }
 
-contract Treasury {
+contract Treasury is owned {
+
+  event Added( address indexed trustee );
+  event Flagged( address indexed trustee, bool isRaised );
+  event Replaced( address indexed older, address indexed newer );
+
+  event Proposal( address indexed payee, uint amt, string eref );
+  event Approved( address indexed approver,
+                  address indexed to,
+                  uint amount,
+                  string eref );
+  event Spent( address indexed payee, uint amt, string eref );
 
   function Treasury() {}
 
@@ -42,6 +53,7 @@ contract Treasury {
   struct SpendProposal {
     address payee;
     uint amount;
+    string eref;
     address[] approvals;
   }
 
@@ -50,55 +62,44 @@ contract Treasury {
   address[] trustees;
   bool[]    flagged; // flagging a trustee disables them from voting
 
-  function addTrustee(address trustee) onlyTreasurer
+  function add( address trustee ) onlyTreasurer
   {
     for (uint ix = 0; ix < trustees.length; ix++)
       if (trustees[ix] == msg.sender) return;
 
     trustees.push(trustee);
     flagged.push(false);
+
+    Added( trustee );
   }
 
-  function trusteeFlag( bool flag, uint ix ) onlyTreasurer
+  function flag( bool isRaised, uint ix ) onlyTreasurer
   {
     require( ix < trustees.length );
-    flagged[ix] = flag;
+    flagged[ix] = isRaised;
+
+    Flagged( trustees[ix], flagged[ix] );
   }
 
-  function replaceTrustee( address newtrustee, uint ix ) onlyTreasurer
+  function replace( address newer, uint ix ) onlyTreasurer
   {
     require (ix < trustees.length);
-    trustees[ix] = newtrustee;
+
+    Replaced( trustees[ix], newer );
+
+    trustees[ix] = newer;
     flagged[ix] = false;
   }
 
-  function trusteeCount() constant returns (uint) { return trustees.length; }
-
-  function trustee( uint ix ) constant returns (address)
-  {
-    require (ix < proposals.length);
-    return trustees[ix];
-  }
-
-  function addProposal( address _payee, uint _wei )
+  function proposal( address _payee, uint _wei, string _eref )
   {
     uint ix = proposals.length++;
+
     proposals[ix].payee = _payee;
     proposals[ix].amount = _wei;
-  }
+    proposals[ix].eref = _eref;
 
-  function proposalCount() constant returns (uint) { return proposals.length; }
-
-  function getProposal(uint ix) constant returns (address, uint)
-  {
-    require( ix < proposals.length );
-    return (proposals[ix].payee, proposals[ix].amount);
-  }
-
-  function approvalCountForProposal( uint pix ) constant returns (uint)
-  {
-    require( pix < proposals.length );
-    return proposals[pix].approvals.length;
+    Proposal( _payee, _wei, _eref );
   }
 
   function approve( uint pix )
@@ -116,6 +117,11 @@ contract Treasury {
         }
 
         proposals[pix].approvals.push( msg.sender );
+
+        Approved( msg.sender,
+                  proposals[pix].payee,
+                  proposals[pix].amount,
+                  proposals[pix].eref );
       }
     }
 
@@ -123,8 +129,11 @@ contract Treasury {
          && this.balance >= proposals[pix].amount
          && proposals[pix].approvals.length > (trustees.length / 2) )
     {
-      require (proposals[pix].payee.send(prop.amount)); // SEND MONEY
-      proposals[pix].amount = 0;
+      require (proposals[pix].payee.send(proposals[pix].amount)); // SEND MONEY
+
+      Spent( proposals[pix].payee, proposals[pix].amount, proposals[pix].eref );
+
+      proposals[pix].amount = 0; // prevent double spend
     }
   }
 }
