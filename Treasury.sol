@@ -60,12 +60,14 @@ contract Treasury is owned {
   SpendProposal[] proposals;
 
   address[] trustees;
-  bool[]    flagged; // flagging a trustee disables them from voting
+  bool[]    flagged; // flagging trustee disables from voting
 
   function add( address trustee ) onlyTreasurer
   {
+    require( trustee != treasurer ); // separate Treasurer and Trustees
+
     for (uint ix = 0; ix < trustees.length; ix++)
-      if (trustees[ix] == msg.sender) return;
+      if (trustees[ix] == trustee) return;
 
     trustees.push(trustee);
     flagged.push(false);
@@ -147,14 +149,16 @@ contract Treasury is owned {
 
         if ( proposals[pix].approvals.length > (trustees.length / 2) )
         {
-          require(    this.balance >= proposals[pix].amount
-                   && proposals[pix].payee.send(proposals[pix].amount) );
+          require( this.balance >= proposals[pix].amount );
 
-          Spent( proposals[pix].payee,
-                 proposals[pix].amount,
-                 proposals[pix].eref );
+          if ( proposals[pix].payee.send(proposals[pix].amount) )
+          {
+            Spent( proposals[pix].payee,
+                   proposals[pix].amount,
+                   proposals[pix].eref );
 
-          proposals[pix].amount = 0; // prevent double spend
+            proposals[pix].amount = 0; // prevent double spend
+          }
         }
       }
     }

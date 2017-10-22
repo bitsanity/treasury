@@ -1,9 +1,8 @@
 // ===========================================================================
-// $ node sendEther.js <to SCA>
+// $ node sendEther.js <to SCA> <amount wei>
 // ===========================================================================
 
 var Mod = require('./TREASURY');
-var con = Mod.getContract( process.argv[2] );
 
 var cb;
 Mod.getWeb3().eth.getAccounts().then( (res) => {
@@ -12,7 +11,8 @@ Mod.getWeb3().eth.getAccounts().then( (res) => {
 
   // gas: 53000 (?)
   Mod.getWeb3().eth.sendTransaction( {from: cb,
-                                      value: 1e18,
+                                      to: process.argv[2],
+                                      value: process.argv[3],
                                       gas: 100000}, (err, res) => {
     if (err) console.log( 'err: ', err );
     if (res) console.log( 'res: ', res );
