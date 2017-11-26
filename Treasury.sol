@@ -1,12 +1,13 @@
-pragma solidity ^0.4.15;
+//
+// compiler: solcjs -o ./build --optimize --abi --bin <this file>
+//  version: 0.4.18+commit.9cf6e910.Emscripten.clang
+//
+pragma solidity ^0.4.18;
 
 // ---------------------------------------------------------------------------
-// Treasury smart contract. Owner (the Treasurer) does not have the ability to
-// spend.
-//
-// Instead, the Treasurer appoints Trustees who approve spending proposals.
-// Funds are sent automatically once a proposal is approved by a simple
-// majority of trustees.
+// Treasury smart contract. Owner (Treasurer) cannot spend. Instead, the
+// Treasurer appoints Trustees who approve spending proposals. Funds are sent
+// automatically once a proposal is approved by a simple majority of trustees.
 //
 // Trustees can be flagged as inactive by the Treasurer. An inactive Trustee
 // cannot vote. The Treasurer may set/reset flags. The Treasurer can replace
@@ -16,21 +17,17 @@ pragma solidity ^0.4.15;
 contract owned
 {
   address public treasurer;
-
-  function owned() { treasurer = msg.sender; }
+  function owned() public { treasurer = msg.sender; }
 
   modifier onlyTreasurer {
     require( msg.sender == treasurer );
     _;
   }
 
-  function setTreasurer( address newTreasurer ) onlyTreasurer {
-    treasurer = newTreasurer;
-  }
+  function setTreasurer( address newTreasurer ) public onlyTreasurer
+  { treasurer = newTreasurer; }
 
-  function closedown() onlyTreasurer {
-    selfdestruct( treasurer );
-  }
+  function closedown() public onlyTreasurer { selfdestruct( treasurer ); }
 }
 
 contract Treasury is owned {
@@ -46,9 +43,9 @@ contract Treasury is owned {
                   string eref );
   event Spent( address indexed payee, uint amt, string eref );
 
-  function Treasury() {}
+  function Treasury() public {}
 
-  function() payable {}
+  function() public payable {}
 
   struct SpendProposal {
     address payee;
@@ -62,7 +59,7 @@ contract Treasury is owned {
   address[] trustees;
   bool[]    flagged; // flagging trustee disables from voting
 
-  function add( address trustee ) onlyTreasurer
+  function add( address trustee ) public onlyTreasurer
   {
     require( trustee != treasurer ); // separate Treasurer and Trustees
 
@@ -75,7 +72,7 @@ contract Treasury is owned {
     Added( trustee );
   }
 
-  function flag( address trustee, bool isRaised ) onlyTreasurer
+  function flag( address trustee, bool isRaised ) public onlyTreasurer
   {
     for( uint ix = 0; ix < trustees.length; ix++ )
       if (trustees[ix] == trustee)
@@ -85,7 +82,7 @@ contract Treasury is owned {
       }
   }
 
-  function replace( address older, address newer ) onlyTreasurer
+  function replace( address older, address newer ) public onlyTreasurer
   {
     for( uint ix = 0; ix < trustees.length; ix++ )
       if (trustees[ix] == older)
@@ -96,7 +93,8 @@ contract Treasury is owned {
       }
   }
 
-  function proposal( address _payee, uint _wei, string _eref ) onlyTreasurer
+  function proposal( address _payee, uint _wei, string _eref )
+  public onlyTreasurer
   {
     bytes memory erefb = bytes(_eref);
     require(    _payee != address(0)
@@ -112,7 +110,7 @@ contract Treasury is owned {
     Proposal( _payee, _wei, _eref );
   }
 
-  function approve( address _payee, uint _wei, string _eref )
+  function approve( address _payee, uint _wei, string _eref ) public
   {
     // ensure caller is a trustee in good standing
     bool senderValid = false;
@@ -164,7 +162,7 @@ contract Treasury is owned {
     }
   }
 
-  function strcmp( string _a, string _b ) constant internal returns (bool)
+  function strcmp( string _a, string _b ) pure internal returns (bool)
   {
     return keccak256(_a) == keccak256(_b);
   }
