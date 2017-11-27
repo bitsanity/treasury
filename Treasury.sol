@@ -5,13 +5,14 @@
 pragma solidity ^0.4.18;
 
 // ---------------------------------------------------------------------------
-// Treasury smart contract. Owner (Treasurer) cannot spend. Instead, the
-// Treasurer appoints Trustees who approve spending proposals. Funds are sent
-// automatically once a proposal is approved by a simple majority of trustees.
+// Treasury smart contract. Owner (Treasurer) is only account that can submit
+// proposals, yet cannot actually spend. The Treasurer appoints Trustees to
+// approve spending proposals. Funds are released automatically once a
+// proposal is approved by a simple majority of trustees.
 //
 // Trustees can be flagged as inactive by the Treasurer. An inactive Trustee
 // cannot vote. The Treasurer may set/reset flags. The Treasurer can replace
-// any Trustee, though any approvals already made will count.
+// any Trustee, though any approvals already made will stand.
 // ---------------------------------------------------------------------------
 
 contract owned
@@ -43,21 +44,20 @@ contract Treasury is owned {
                   string eref );
   event Spent( address indexed payee, uint amt, string eref );
 
-  function Treasury() public {}
-
-  function() public payable {}
-
   struct SpendProposal {
-    address payee;
-    uint amount;
-    string eref;
+    address   payee;
+    uint      amount;
+    string    eref;
     address[] approvals;
   }
 
   SpendProposal[] proposals;
+  address[]       trustees;
+  bool[]          flagged; // flagging trustee disables from voting
 
-  address[] trustees;
-  bool[]    flagged; // flagging trustee disables from voting
+  function Treasury() public {}
+
+  function() public payable {}
 
   function add( address trustee ) public onlyTreasurer
   {
