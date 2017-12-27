@@ -61,6 +61,7 @@ contract Treasury is owned {
 
   function add( address trustee ) public onlyTreasurer
   {
+    require( trustee != address(0) );
     require( trustee != treasurer ); // separate Treasurer and Trustees
 
     for (uint ix = 0; ix < trustees.length; ix++)
@@ -79,6 +80,7 @@ contract Treasury is owned {
       {
         flagged[ix] = isRaised;
         Flagged( trustees[ix], flagged[ix] );
+        break;
       }
   }
 
@@ -90,6 +92,7 @@ contract Treasury is owned {
         Replaced( trustees[ix], newer );
         trustees[ix] = newer;
         flagged[ix] = false;
+        break;
       }
   }
 
