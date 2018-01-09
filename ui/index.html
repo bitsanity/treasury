@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Treasury UI</title>
+  <meta charset="UTF-8"/>
+  <link rel="stylesheet" type="text/css" href="skin.css"/>
+</head>
+<body>
+
+<!-- ==================================================================== -->
+<!-- ==================================================================== -->
+<div id="accountsection">
+<table>
+<tr>
+<td align="right"><div id="etherbase" class="label">
+Ξtherbase:
+</td>
+<td>
+<select id="accounts" onchange="setBalance();" />
+</td>
+</div>
+</tr>
+<tr>
+<td align="right"><div id="divBalance" class="label">
+Balance (ETH):
+</td>
+<td>
+<div id="balance">0</div>
+</td>
+</tr>
+</table>
+</div>
+<!-- ==================================================================== -->
+<!-- ==================================================================== -->
+<p/>
+<table>
+<tr>
+<td align="right">
+<div id="scalabel" class="label">
+Treasury SCA:
+</div>
+</td>
+<td>
+<input id="scafield" type="text" size="42" maxlength="42"
+       onchange="setSCA();" />
+</td>
+</tr>
+</table>
+<!-- ==================================================================== -->
+<!-- ==================================================================== -->
+<p/>
+
+<div class="tab">
+<button class="tablinks" onclick="openTab(event, 'Members')">Members</button>
+<button class="tablinks" onclick="openTab(event, 'Spends')">Spends</button>
+<button class="tablinks" onclick="openTab(event, 'Votes')">Votes</button>
+</div>
+
+<div id="Members" class="tabcontent">
+  <h3>Members</h3>
+  <p>Member stuff</p>
+</div>
+
+<div id="Spends" class="tabcontent">
+  <h3>Spends</h3>
+  <p>Spends.</p>
+</div>
+
+<div id="Votes" class="tabcontent">
+  <h3>Votes</h3>
+  <p>Votes.</p>
+</div>
+
+<!-- ==================================================================== -->
+<!-- ==================================================================== -->
+<!-- SCRIPTS -->
+
+<script type="text/javascript" src="./web3.min.js"></script>
+<script type="text/javascript" src="connect.js"></script>
+<script type="text/javascript" src="etherbase.js"></script>
+<script type="text/javascript" src="balance.js"></script>
+<script type="text/javascript" src="sca.js"></script>
+<script type="text/javascript" src="tabs.js"></script>
+
+<script type="text/javascript">
+  setBalance();
+</script>
+
+</body>
+</html>
