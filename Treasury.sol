@@ -1,8 +1,7 @@
 //
-// compiler: solcjs -o ./build --optimize --abi --bin <this file>
-//  version: 0.4.18+commit.9cf6e910.Emscripten.clang
+// compiler: 0.4.19+commit.c4cbbb05.Emscripten.clang
 //
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 // ---------------------------------------------------------------------------
 // Treasury smart contract. Owner (Treasurer) is only account that can submit
@@ -19,16 +18,13 @@ contract owned
 {
   address public treasurer;
   function owned() public { treasurer = msg.sender; }
-
+  function closedown() public onlyTreasurer { selfdestruct( treasurer ); }
+  function setTreasurer( address newTreasurer ) public onlyTreasurer
+  { treasurer = newTreasurer; }
   modifier onlyTreasurer {
     require( msg.sender == treasurer );
     _;
   }
-
-  function setTreasurer( address newTreasurer ) public onlyTreasurer
-  { treasurer = newTreasurer; }
-
-  function closedown() public onlyTreasurer { selfdestruct( treasurer ); }
 }
 
 contract Treasury is owned {

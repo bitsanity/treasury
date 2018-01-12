@@ -1,13 +1,18 @@
 function setSCA()
 {
   const deny = /[^0x123456789abcdefABCDEF]/;
-  var sca = document.getElementById("scafield");
+  let scaf = document.getElementById("scafield");
+  let sca = scaf.value;
 
-  if (    !sca.value.startsWith("0x")
-       || deny.test(sca.value)
-       || sca.value.length != 42
-     )
-    sca.style.backgroundColor = "yellow";
+  if (    !sca.startsWith("0x")
+       || deny.test(sca)
+       || sca.length != 42 )
+    scaf.style.backgroundColor = "yellow";
   else
-    sca.style.backgroundColor = "white";
+  {
+    scaf.style.backgroundColor = "white";
+
+    TRSCON = getTreasury( sca );
+    actionSelected();
+  }
 }

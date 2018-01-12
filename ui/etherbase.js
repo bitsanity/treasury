@@ -1,4 +1,4 @@
-var accts = document.getElementById("accounts");
+var ACCTS = document.getElementById("accounts");
 
 var eaccts = web3.eth.accounts;
 if (eaccts) {
@@ -6,11 +6,11 @@ if (eaccts) {
   {
     let op = document.createElement("option");
     op.text = eaccts[ii];
-    accts.add(op);
+    ACCTS.add(op);
   }
 }
 else {
   let op = document.createElement("option");
   op.text = "ERROR";
-  accts.add(op);
+  ACCTS.add(op);
 }

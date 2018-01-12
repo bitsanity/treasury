@@ -6,9 +6,24 @@ body {
   background-color: #CCCCCC;
 }
 
+#spendslist {
+  font-size: 10px;
+}
+
 .label {
+  display: inline;
   font-family: monospace;
   font-weight: bold;
+}
+
+.balfield {
+  font-family: monospace;
+}
+
+.roField {
+  border: 1px solid black;
+  padding: 2px 2px 2px 2px;
+  font-family: monospace;
 }
 
 /* Style the tab */

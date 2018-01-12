@@ -8,67 +8,153 @@
 <body>
 
 <!-- ==================================================================== -->
-<!-- ==================================================================== -->
 <div id="accountsection">
 <table>
 <tr>
-<td align="right"><div id="etherbase" class="label">
-Ξtherbase:
-</td>
-<td>
-<select id="accounts" onchange="setBalance();" />
-</td>
-</div>
+  <td align=right><div id="etherbase" class="label">Ξtherbase: </div></td>
+  <td><select id="accounts" onchange="setBalance();actionSelected();" /></td>
 </tr>
 <tr>
-<td align="right"><div id="divBalance" class="label">
-Balance (ETH):
-</td>
-<td>
-<div id="balance">0</div>
-</td>
+  <td align=right><div id="divBalance" class="label">Balance (ΞTH): </div></td>
+  <td><div id="balance" class="balfield">0</div></td>
 </tr>
 </table>
 </div>
-<!-- ==================================================================== -->
+
 <!-- ==================================================================== -->
 <p/>
 <table>
 <tr>
-<td align="right">
-<div id="scalabel" class="label">
-Treasury SCA:
+  <td align=right><div id="scalabel" class="label">Treasury SCA: </div></td>
+  <td><input id="scafield" type="text" size="42" maxlength="42"
+             onchange="setSCA();"/></td>
+</tr>
+<tr>
+  <td align=right>
+    <div id="scaballabel" class="label">Balance (ΞTH): </div>
+  </td>
+  <td><div id="scabalvalue" class="balfield">0</div></td>
+</tr>
+</table>
+
+<!-- ==================================================================== -->
+<p/>
+<div class="tab">
+<button class="tablinks"
+        onclick="openTab(event, 'Members');doMembers();">Members</button>
+<button class="tablinks"
+        onclick="openTab(event, 'Spends');doSpends();">Spends</button>
+<button class="tablinks"
+        onclick="openTab(event, 'Votes');doVotes();">Votes</button>
 </div>
-</td>
+
+<!-- TAB 1 -->
+<div id="Members" class="tabcontent">
+<table>
+<tr>
+<td><div id="treasurerlabel" class="label">Treasurer: </div></td>
 <td>
-<input id="scafield" type="text" size="42" maxlength="42"
-       onchange="setSCA();" />
+<input id="treasurerval" type="text" size="42" maxlength="42" disabled="true"/>
+</td>
+</tr>
+<tr>
+<td valign="top"><div id="trusteeslabel" class="label">Trustees: </div></td>
+</tr>
+<tr>
+<td colspan="2">
+  <textarea id="trusteeslist"
+            rows="4" cols="53" disabled="true">Fetching...</textarea>
 </td>
 </tr>
 </table>
-<!-- ==================================================================== -->
-<!-- ==================================================================== -->
 <p/>
-
-<div class="tab">
-<button class="tablinks" onclick="openTab(event, 'Members')">Members</button>
-<button class="tablinks" onclick="openTab(event, 'Spends')">Spends</button>
-<button class="tablinks" onclick="openTab(event, 'Votes')">Votes</button>
+<table>
+<tr>
+<td>
+  <select id="actions" onchange="actionSelected()">
+  <option value="add">Add (+)</option>
+  <option value="setflag">Flag (#)</option>
+  <option value="resetflag">UnFlag ( )</option>
+  <option value="replace">Replace (=)</option>
+</select>
+</td>
+<td><input id="action1" type="text" size="42" maxlength="42" /></td>
+</tr>
+<tr>
+<td/>
+<td><input id="action2"
+           type="text" size="42" maxlength="42" disabled="true"/></td>
+</tr>
+<tr>
+<td/>
+<td><button id="actioncommand"
+            onclick="performAction();actionSelected();">Do It (Ξ)</button></td>
+</tr>
+</table>
 </div>
 
-<div id="Members" class="tabcontent">
-  <h3>Members</h3>
-  <p>Member stuff</p>
-</div>
-
+<!-- TAB 2 -->
 <div id="Spends" class="tabcontent">
-  <h3>Spends</h3>
-  <p>Spends.</p>
+<div id="spendslabel" class="label">Spend Proposals:</div>
+<br/>
+<textarea id="spendslist"
+          rows="8" cols="73" disabled="true">Fetching...</textarea>
+<br/>
+<table>
+<tr>
+<td align=right><div id="reciplabel" class="label">Receive Addr:</div></td>
+<td><input id="recipval" type="text" size="42" maxlength="42"/></td>
+</tr>
+<tr>
+<td align=right><div id="amtlabel" class="label">Amount (wei):</div></td>
+<td><input id="amtval" type="text" size="24" maxlength="27"/></td>
+</tr>
+<tr>
+<td align=right><div id="ereflabel" class="label">Ξxt. Ref:</div></td>
+<td><input id="erefval" type="text" size="42" maxlength="42"/></td>
+</tr>
+<tr>
+<td/>
+<td>
+<button id="proposecommand" onclick="newProposal();">Propose (Ξ)</button>
+&nbsp;
+<button id="searchcommand"
+        onclick="searchProposals();">Search (&#x1f50d;)</button>
+</td>
+</tr>
+</table>
 </div>
 
+<!-- TAB 3 -->
 <div id="Votes" class="tabcontent">
-  <h3>Votes</h3>
-  <p>Votes.</p>
+<div id="outslabel" class="label">Proposals Outstanding: </div>
+<p/>
+<div id="idlabel" class="label">ID:</div>
+<select id="outselect" onchange="proposalSelected();" ></select>
+<br/>
+
+<table cellspacing=3>
+<tr>
+<td align=right><div id="t3reciplabel" class="label">Receive Addr:</div></td>
+<td><div id="t3recipfield" class="roField">&nbsp;</div></td>
+</tr>
+<tr>
+<td align=right><div id="t3amtlabel" class="label">Amount (wei):</div></td>
+<td><div id="t3amtfield" class="roField">&nbsp;</div></td>
+</tr>
+<tr>
+<td align=right><div id="t3ereflabel" class="label">Ξxt. Ref:</div></td>
+<td><div id="t3ereffield" class="roField">&nbsp;</div></td>
+</tr>
+<tr>
+<td/>
+<td>
+&nbsp;<br/>
+<button id="approvebtn" onclick="approveSpend();">Approve (Ξ)</button>
+</td>
+</tr>
+</table>
+<p/>
 </div>
 
 <!-- ==================================================================== -->
@@ -76,13 +162,18 @@ Treasury SCA:
 <!-- SCRIPTS -->
 
 <script type="text/javascript" src="./web3.min.js"></script>
+
 <script type="text/javascript" src="connect.js"></script>
 <script type="text/javascript" src="etherbase.js"></script>
 <script type="text/javascript" src="balance.js"></script>
 <script type="text/javascript" src="sca.js"></script>
 <script type="text/javascript" src="tabs.js"></script>
+<script type="text/javascript" src="members.js"></script>
+<script type="text/javascript" src="spends.js"></script>
+<script type="text/javascript" src="votes.js"></script>
 
 <script type="text/javascript">
+  window.resizeTo( 512, 465 );
   setBalance();
 </script>
 
