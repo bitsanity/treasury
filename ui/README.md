@@ -16,13 +16,15 @@ accounts. The user must unlock the account(s) separately.
 
 ## Usage
 
-Simply run the executable from the command line, or put in your desktop folder
-and make a shortcut to run it
+Simply run the executable from the command line or make a desktop shortcut
 
 ## Dev Setup
 
 * Download SDK version of NW.js from [NW.js](https://nwjs.io)
 * Extract the tarball and put the directory with the nw executable in your PATH
+* cd to the treasury/ui directory
+* Download and save the raw web3.min.js file from
+  [ethereum/web3.js](https://github.com/ethereum/web3.js/dist)
 * Run: `$ nw .`
 
 ## Reuse
