@@ -23,8 +23,8 @@ Simply run the executable from the command line or make a desktop shortcut
 * Download SDK version of NW.js from [NW.js](https://nwjs.io)
 * Extract the tarball and put the directory with the nw executable in your PATH
 * cd to the treasury/ui directory
-* Download and save the raw web3.min.js file from
-  [ethereum/web3.js](https://github.com/ethereum/web3.js/dist)
+* Download and save the raw web3.min.js file from the dist subdirectory under
+  [ethereum/web3.js](https://github.com/ethereum/web3.js)
 * Run: `$ nw .`
 
 ## Reuse
