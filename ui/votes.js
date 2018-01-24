@@ -92,7 +92,7 @@ function approveSpend()
   console.log( PAYEES[ix], ':', AMTS[ix], ':', EREFS[ix] );
 
   TRSCON.approve( PAYEES[ix], AMTS[ix], EREFS[ix],
-                  {from: cbase, gas:250000} );
+                  {from: cbase, gas:250000, gasPrice: MYGASPRICE} );
 
   setTimeout( doVotes(), 1000 );
   document.getElementById( "t3recipfield" ).innerHTML = '      ';

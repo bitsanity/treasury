@@ -39,19 +39,22 @@ function performAction() {
 
   if (ix == "0") {
     console.log( 'adding ' + uaddr1 );
-    TRSCON.add( uaddr1, {from: cbase, gas:100000} );
+    TRSCON.add( uaddr1, {from: cbase, gas:100000, gasPrice: MYGASPRICE} );
   }
   else if (ix == "1") {
     console.log( 'flagging ' + uaddr1 );
-    TRSCON.flag( uaddr1, true, {from: cbase, gas:100000} );
+    TRSCON.flag( uaddr1, true,
+                 {from: cbase, gas:100000, gasPrice: MYGASPRICE} );
   }
   else if (ix == "2") {
     console.log( 'unflagging ' + uaddr1 );
-    TRSCON.flag( uaddr1, false, {from: cbase, gas:100000} );
+    TRSCON.flag( uaddr1, false,
+                 {from: cbase, gas:100000, gasPrice: MYGASPRICE} );
   }
   else if (ix == "3") {
     console.log( 'replacing ' + uaddr1 + ' with ' + uaddr2 );
-    TRSCON.replace( uaddr1, uaddr2, {from: cbase, gas:100000} );
+    TRSCON.replace( uaddr1, uaddr2,
+                    {from: cbase, gas:100000, gasPrice: MYGASPRICE} );
   }
 
   document.getElementById("actions").selectedIndex = 0;

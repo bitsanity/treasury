@@ -62,7 +62,8 @@ function newProposal()
     return;
   }
 
-  TRSCON.proposal( recip, amt, eref, {from: cbase, gas:500000} );
+  TRSCON.proposal( recip, amt, eref,
+                   {from: cbase, gas:500000, gasPrice: MYGASPRICE} );
 
   document.getElementById( "recipval" ).value = '';
   document.getElementById( "amtval" ).value = '';

@@ -1,5 +1,7 @@
 const fs = require('fs');
 
+const MYGASPRICE = 4000000000; // 4 Gwei, lower cost but higher delays
+
 if (typeof web3 !== 'undefined')
   web3 = new Web3(web3.currentProvider);
 else
