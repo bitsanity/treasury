@@ -10,17 +10,20 @@ pragma solidity ^0.4.19;
 // proposal is approved by a simple majority of trustees.
 //
 // Trustees can be flagged as inactive by the Treasurer. An inactive Trustee
-// cannot vote. The Treasurer may set/reset flags. The Treasurer can replace
-// any Trustee, though any approvals already made will stand.
+// cannot vote. The Treasurer may set/reset flags on trustees.
 // ---------------------------------------------------------------------------
 
 contract owned
 {
   address public treasurer;
+
   function owned() public { treasurer = msg.sender; }
+
   function closedown() public onlyTreasurer { selfdestruct( treasurer ); }
+
   function setTreasurer( address newTreasurer ) public onlyTreasurer
   { treasurer = newTreasurer; }
+
   modifier onlyTreasurer {
     require( msg.sender == treasurer );
     _;
@@ -30,14 +33,18 @@ contract owned
 contract Treasury is owned {
 
   event Added( address indexed trustee );
+
   event Flagged( address indexed trustee, bool isRaised );
+
   event Replaced( address indexed older, address indexed newer );
 
   event Proposal( address indexed payee, uint amt, string eref );
+
   event Approved( address indexed approver,
                   address indexed to,
                   uint amount,
                   string eref );
+
   event Spent( address indexed payee, uint amt, string eref );
 
   struct SpendProposal {
@@ -47,9 +54,11 @@ contract Treasury is owned {
     address[] approvals;
   }
 
-  SpendProposal[] proposals;
-  address[]       trustees;
-  bool[]          flagged; // flagging trustee disables from voting
+  mapping( bytes32 => SpendProposal ) proposals;
+
+  // use array instead of mapping as we need the length property for voting
+  address[] trustees;
+  bool[]    flagged; // true means trustee is not allowed to vote
 
   function Treasury() public {}
 
@@ -58,13 +67,14 @@ contract Treasury is owned {
   function add( address trustee ) public onlyTreasurer
   {
     require( trustee != address(0) );
-    require( trustee != treasurer ); // separate Treasurer and Trustees
+    require( trustee != treasurer );
 
     for (uint ix = 0; ix < trustees.length; ix++)
-      if (trustees[ix] == trustee) return;
+      if (trustees[ix] == trustee)
+        return;
 
-    trustees.push(trustee);
-    flagged.push(false);
+    trustees.push( trustee );
+    flagged.push( false );
 
     Added( trustee );
   }
@@ -101,17 +111,17 @@ contract Treasury is owned {
              && erefb.length > 0
              && erefb.length <= 32 );
 
-    uint ix = proposals.length++;
-    proposals[ix].payee = _payee;
-    proposals[ix].amount = _wei;
-    proposals[ix].eref = _eref;
+    bytes32 key = keccak256( _payee, _wei, _eref );
+    proposals[key].payee = _payee;
+    proposals[key].amount = _wei;
+    proposals[key].eref = _eref;
 
     Proposal( _payee, _wei, _eref );
   }
 
   function approve( address _payee, uint _wei, string _eref ) public
   {
-    // ensure caller is a trustee in good standing
+    // scan trustees - ensure caller is a trustee in good standing
     bool senderValid = false;
     for (uint tix = 0; tix < trustees.length; tix++) {
       if (msg.sender == trustees[tix]) {
@@ -123,40 +133,33 @@ contract Treasury is owned {
     }
     if (!senderValid) revert();
 
-    // find the matching proposal not already actioned (amount would be 0)
-    for (uint pix = 0; pix < proposals.length; pix++)
+    // fetch matching proposal. if already actioned amount will be zero
+    bytes32 key = keccak256( _payee, _wei, _eref );
+
+    // check proposal exists and not already actioned (amount would be 0)
+    require(    proposals[key].payee != address(0)
+             && proposals[key].amount > 0 );
+
+    bytes memory erefb = bytes(proposals[key].eref);
+    require( erefb.length > 0 );
+
+    // prevent voting twice
+    for (uint ix = 0; ix < proposals[key].approvals.length; ix++)
+      if (msg.sender == proposals[key].approvals[ix])
+        revert();
+
+    proposals[key].approvals.push( msg.sender );
+
+    Approved( msg.sender, _payee, _wei, _eref );
+
+    if ( proposals[key].approvals.length > (trustees.length / 2) )
     {
-      if (    proposals[pix].payee == _payee
-           && proposals[pix].amount == _wei
-           && strcmp(proposals[pix].eref, _eref) )
+      require( this.balance >= proposals[key].amount );
+
+      if ( proposals[key].payee.send(proposals[key].amount) )
       {
-        // prevent voting twice
-        for (uint ap = 0; ap < proposals[pix].approvals.length; ap++)
-        {
-          if (msg.sender == proposals[pix].approvals[ap])
-            revert();
-        }
-
-        proposals[pix].approvals.push( msg.sender );
-
-        Approved( msg.sender,
-                  proposals[pix].payee,
-                  proposals[pix].amount,
-                  proposals[pix].eref );
-
-        if ( proposals[pix].approvals.length > (trustees.length / 2) )
-        {
-          require( this.balance >= proposals[pix].amount );
-
-          if ( proposals[pix].payee.send(proposals[pix].amount) )
-          {
-            Spent( proposals[pix].payee,
-                   proposals[pix].amount,
-                   proposals[pix].eref );
-
-            proposals[pix].amount = 0; // prevent double spend
-          }
-        }
+        Spent( _payee, _wei, _eref );
+        proposals[key].amount = 0; // prevents double spend
       }
     }
   }

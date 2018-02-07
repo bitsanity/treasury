@@ -10,11 +10,11 @@ function shorten(addr) {
   return "0x" + saddr.substring(26);
 }
 
-contract.getPastEvents('allEvents',
-                       {fromBlock: 0,
-                        toBlock: 'latest'})
+contract.getPastEvents('allEvents', {fromBlock: 0, toBlock: 'latest'})
 .then( (events) =>
 {
+  console.log( "events.length is " + events.length );
+
   for (var ii = 0; ii < events.length; ii++) {
 
     if (events[ii].event == 'Added' )

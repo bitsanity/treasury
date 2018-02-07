@@ -7,7 +7,7 @@ var con = Mod.getContract( process.argv[2] );
 
 var cb;
 Mod.getWeb3().eth.getAccounts().then( (res) => {
-  cb = res[0];
+  cb = res[5];
   console.log( "cb: ", cb );
 
   // gas: 75422
