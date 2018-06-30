@@ -6,6 +6,7 @@ if (typeof web3 !== 'undefined')
   web3 = new Web3(web3.currentProvider);
 else
   web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+//web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:8546"));
 
 function getABI() {
   return JSON.parse(fs.readFileSync('Treasury_sol_Treasury.abi').toString());
