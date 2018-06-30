@@ -1,12 +1,18 @@
+const deny = /[^0x123456789abcdefABCDEF]/;
+
+function isSCA()
+{
+  return sca.startsWith("0x")
+         && !deny.test(sca)
+         && sca.length == 42;
+}
+
 function setSCA()
 {
-  const deny = /[^0x123456789abcdefABCDEF]/;
   let scaf = document.getElementById("scafield");
   let sca = scaf.value.toLowerCase();
 
-  if (    !sca.startsWith("0x")
-       || deny.test(sca)
-       || sca.length != 42 )
+  if (!isSCA(sca))
   {
     scaf.style.backgroundColor = "yellow";
     return;

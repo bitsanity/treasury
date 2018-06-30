@@ -1,7 +1,7 @@
 //
-// compiler: 0.4.19+commit.c4cbbb05.Emscripten.clang
+// compiler: 0.4.21+commit.dfe3193c.Emscripten.clang
 //
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
 // ---------------------------------------------------------------------------
 // Treasury smart contract. Owner (Treasurer) is only account that can submit
@@ -13,13 +13,16 @@ pragma solidity ^0.4.19;
 // cannot vote. The Treasurer may set/reset flags on trustees.
 // ---------------------------------------------------------------------------
 
+interface Token {
+  // note: function implemented by ERC20 and ERC223
+  function transfer( address to, uint amount ) external;
+}
+
 contract owned
 {
   address public treasurer;
 
   function owned() public { treasurer = msg.sender; }
-
-  function closedown() public onlyTreasurer { selfdestruct( treasurer ); }
 
   function setTreasurer( address newTreasurer ) public onlyTreasurer
   { treasurer = newTreasurer; }
@@ -38,27 +41,57 @@ contract Treasury is owned {
 
   event Replaced( address indexed older, address indexed newer );
 
+  // Spend... to pay the payee some amount of wei
   event Proposal( address indexed payee, uint amt, string eref );
 
+  // Token... to transfer amount of token units from (this) to given address
+  event TransferProposal( address indexed toksca,
+                          address indexed to,
+                          uint            amt,
+                          string          eref );
+
+  // Spend...
   event Approved( address indexed approver,
                   address indexed to,
-                  uint amount,
-                  string eref );
+                  uint            amount,
+                  string          eref );
 
+  // Token...
+  event TransferApproved( address indexed approver,
+                          address indexed toksca,
+                          address indexed to,
+                          uint            amount,
+                          string          eref );
+
+  // wei...
   event Spent( address indexed payee, uint amt, string eref );
 
-  struct SpendProposal {
+  // Tokens...
+  event Transferred( address indexed toksca,
+                     address indexed to,
+                     uint amount,
+                     string eref );
+
+  struct SpendProp {
     address   payee;
     uint      amount;
     string    eref;
     address[] approvals;
   }
 
-  mapping( bytes32 => SpendProposal ) proposals;
+  struct TransferProp {
+    address   toksca;
+    address   to;
+    uint      amount;
+    string    eref;
+    address[] approvals;
+  }
 
-  // use array instead of mapping as we need the length property for voting
+  mapping( bytes32 => SpendProp ) proposals;
+  mapping( bytes32 => TransferProp ) tokprops;
+
   address[] trustees;
-  bool[]    flagged; // true means trustee is not allowed to vote
+  bool[]    flags; // 'true' means trustee is not allowed to vote
 
   function Treasury() public {}
 
@@ -74,9 +107,9 @@ contract Treasury is owned {
         return;
 
     trustees.push( trustee );
-    flagged.push( false );
+    flags.push( false );
 
-    Added( trustee );
+    emit Added( trustee );
   }
 
   function flag( address trustee, bool isRaised ) public onlyTreasurer
@@ -84,8 +117,8 @@ contract Treasury is owned {
     for( uint ix = 0; ix < trustees.length; ix++ )
       if (trustees[ix] == trustee)
       {
-        flagged[ix] = isRaised;
-        Flagged( trustees[ix], flagged[ix] );
+        flags[ix] = isRaised;
+        emit Flagged( trustees[ix], flags[ix] );
         break;
       }
   }
@@ -95,9 +128,9 @@ contract Treasury is owned {
     for( uint ix = 0; ix < trustees.length; ix++ )
       if (trustees[ix] == older)
       {
-        Replaced( trustees[ix], newer );
+        emit Replaced( trustees[ix], newer );
         trustees[ix] = newer;
-        flagged[ix] = false;
+        flags[ix] = false;
         break;
       }
   }
@@ -105,43 +138,43 @@ contract Treasury is owned {
   function proposal( address _payee, uint _wei, string _eref )
   public onlyTreasurer
   {
-    bytes memory erefb = bytes(_eref);
-    require(    _payee != address(0)
-             && _wei > 0
-             && erefb.length > 0
-             && erefb.length <= 32 );
+    validate( _payee, _wei, _eref );
 
     bytes32 key = keccak256( _payee, _wei, _eref );
     proposals[key].payee = _payee;
     proposals[key].amount = _wei;
     proposals[key].eref = _eref;
 
-    Proposal( _payee, _wei, _eref );
+    emit Proposal( _payee, _wei, _eref );
+  }
+
+  function proposeTransfer( address _toksca,
+                            address _to,
+                            uint _amount,
+                            string _eref )
+  public onlyTreasurer
+  {
+    validate( _to, _amount, _eref );
+
+    bytes32 key = keccak256( _toksca, _to, _amount, _eref );
+    tokprops[key].toksca = _toksca;
+    tokprops[key].to = _to;
+    tokprops[key].amount = _amount;
+    tokprops[key].eref = _eref;
+
+    emit TransferProposal( _toksca, _to, _amount, _eref );
   }
 
   function approve( address _payee, uint _wei, string _eref ) public
   {
-    // scan trustees - ensure caller is a trustee in good standing
-    bool senderValid = false;
-    for (uint tix = 0; tix < trustees.length; tix++) {
-      if (msg.sender == trustees[tix]) {
-        if (flagged[tix])
-          revert();
-
-        senderValid = true;
-      }
-    }
-    if (!senderValid) revert();
+    validate( _payee, _wei, _eref );
+    require( inGoodStanding(msg.sender) );
 
     // fetch matching proposal. if already actioned amount will be zero
     bytes32 key = keccak256( _payee, _wei, _eref );
 
     // check proposal exists and not already actioned (amount would be 0)
-    require(    proposals[key].payee != address(0)
-             && proposals[key].amount > 0 );
-
-    bytes memory erefb = bytes(proposals[key].eref);
-    require( erefb.length > 0 );
+    require( proposals[key].amount > 0 );
 
     // prevent voting twice
     for (uint ix = 0; ix < proposals[key].approvals.length; ix++)
@@ -150,18 +183,67 @@ contract Treasury is owned {
 
     proposals[key].approvals.push( msg.sender );
 
-    Approved( msg.sender, _payee, _wei, _eref );
+    emit Approved( msg.sender, _payee, _wei, _eref );
 
     if ( proposals[key].approvals.length > (trustees.length / 2) )
     {
-      require( this.balance >= proposals[key].amount );
+      require( address(this).balance >= proposals[key].amount );
+      proposals[key].payee.transfer(proposals[key].amount); // throws if error
+      proposals[key].amount = 0; // prevents double spend
+      emit Spent( _payee, _wei, _eref );
+    }
+  }
 
-      if ( proposals[key].payee.send(proposals[key].amount) )
-      {
-        Spent( _payee, _wei, _eref );
-        proposals[key].amount = 0; // prevents double spend
+  function approveTransfer( address _toksca,
+                            address _to,
+                            uint    _amount,
+                            string  _eref ) public
+  {
+    validate( _to, _amount, _eref );
+    require( inGoodStanding(msg.sender) );
+
+    bytes32 key = keccak256( _toksca, _to, _amount, _eref );
+    require( tokprops[key].amount > 0 );
+
+    for (uint ix = 0; ix < tokprops[key].approvals.length; ix++)
+      if (msg.sender == tokprops[key].approvals[ix])
+        revert();
+
+    tokprops[key].approvals.push( msg.sender );
+
+    emit TransferApproved( msg.sender, _toksca, _to, _amount, _eref );
+
+    if ( tokprops[key].approvals.length > (trustees.length / 2) )
+    {
+      Token token = Token(_toksca);
+      token.transfer( _to, _amount ); // throws if error
+      emit Transferred( _toksca, _to, _amount, _eref );
+      tokprops[key].amount = 0; // prevents double spend
+    }
+  }
+
+  function validate( address _to, uint _amount, string _eref ) pure internal
+  {
+    bytes memory erefb = bytes(_eref);
+    require(    _to != address(0)
+             && _amount > 0
+             && erefb.length > 0
+             && erefb.length <= 32 );
+  }
+
+  function inGoodStanding( address _who ) view internal returns (bool)
+  {
+    bool result = false;
+
+    for (uint tix = 0; tix < trustees.length; tix++) {
+      if (_who == trustees[tix]) {
+        if (flags[tix])
+          return false;
+
+        result = true;
       }
     }
+    return result;
   }
 
   function strcmp( string _a, string _b ) pure internal returns (bool)

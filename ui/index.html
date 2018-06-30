@@ -46,6 +46,10 @@
   onclick="openTab(event, 'Spends');doSpends();">Spends</button>
 <button class="tablinks"
   onclick="openTab(event, 'Votes');doVotes();proposalSelected();">Votes</button>
+<button class="tablinks"
+  onclick="openTab(event, 'Tokens');doTokens();">Tokens</button>
+<button class="tablinks"
+  onclick="openTab(event, 'Transfers');doTransfers();">Transfers</button>
 </div>
 
 <!-- TAB 1 -->
@@ -63,7 +67,7 @@
 <tr>
 <td colspan="2">
   <textarea id="trusteeslist"
-            rows="4" cols="53" disabled="true">Fetching...</textarea>
+            rows="8" cols="53" disabled="true">Fetching...</textarea>
 </td>
 </tr>
 </table>
@@ -98,7 +102,7 @@
 <div id="spendslabel" class="label">Spend Proposals:</div>
 <br/>
 <textarea id="spendslist"
-          rows="8" cols="73" disabled="true">Fetching...</textarea>
+          rows="13" cols="73" disabled="true">Fetching...</textarea>
 <br/>
 <table>
 <tr>
@@ -127,12 +131,11 @@
 
 <!-- TAB 3 -->
 <div id="Votes" class="tabcontent">
-<div id="outslabel" class="label">Proposals Outstanding: </div>
+<div id="outslabel" class="label">Approve Proposal: </div>
 <p/>
 <div id="idlabel" class="label">ID:</div>
 <select id="outselect" onchange="proposalSelected();" ></select>
-<br/>
-
+<p/>
 <table cellspacing=3>
 <tr>
 <td align=right><div id="t3reciplabel" class="label">Receive Addr:</div></td>
@@ -157,6 +160,78 @@
 <p/>
 </div>
 
+<!-- TAB 4 -->
+<div id="Tokens" class="tabcontent">
+<div id="holdslabel" class="label">Holdings: </div>
+<br/>
+<textarea id="tokenslist"
+  rows="8" cols="53" disabled="true">Fetching, patience please ...</textarea>
+<br/>
+<table cellspacing=3>
+
+<tr>
+<td align=right><div id="symlabel" class="label">Token:</div></td>
+<td><select id="tokselect"></select></td>
+</tr>
+
+<tr>
+<td align=right><div id="xfertolabel" class="label">To Addr:</div></td>
+<td><input id="xfertoval" type="text" size="42" maxlength="42"/></td>
+</tr>
+
+<tr>
+<td align=right><div id="xferqtylabel" class="label">Quantity:</div></td>
+<td><input id="xferqtyval" type="text" size="24" maxlength="27"/></td>
+</tr>
+
+<tr>
+<td align=right><div id="xferereflabel" class="label">Ξxt. Ref:</div></td>
+<td><input id="xfererefval" type="text" size="42" maxlength="42"/></td>
+</tr>
+
+<tr>
+<td/>
+<td>
+  <button id="xfercommand" onclick="xferProposal();">Propose (Ξ)</button>
+</td>
+</table>
+
+</div>
+
+<!-- TAB 5 -->
+<div id="Transfers" class="tabcontent">
+<div id="xferlabel" class="label">Approve Transfer: </div>
+<p/>
+<div id="xferidlabel" class="label">ID:</div>
+<select id="xferselect" onchange="transferSelected();" ></select>
+<p/>
+<table cellspacing=3>
+<tr>
+<td align=right><div id="toklabel" class="label">Token:</div></td>
+<td><div id="toksymfield" class="roField">&nbsp;</div></td>
+</tr>
+<tr>
+<td align=right><div id="xferreciplabel" class="label">To Addr:</div></td>
+<td><div id="xferrecipfield" class="roField">&nbsp;</div></td>
+</tr>
+<tr>
+<td align=right><div id="xferqtylabel" class="label">Quantity:</div></td>
+<td><div id="xferqtyfield" class="roField">&nbsp;</div></td>
+</tr>
+<tr>
+<td align=right><div id="xferereflabel" class="label">Ξxt. Ref:</div></td>
+<td><div id="xferereffield" class="roField">&nbsp;</div></td>
+</tr>
+<tr>
+<td/>
+<td>
+&nbsp;<br/>
+<button id="xferapprovebtn" onclick="approveTransfer();">Approve (Ξ)</button>
+</td>
+</tr>
+</table>
+</div>
+
 <!-- ==================================================================== -->
 <!-- ==================================================================== -->
 <!-- SCRIPTS -->
@@ -171,9 +246,11 @@
 <script type="text/javascript" src="members.js"></script>
 <script type="text/javascript" src="spends.js"></script>
 <script type="text/javascript" src="votes.js"></script>
+<script type="text/javascript" src="tokens.js"></script>
+<script type="text/javascript" src="transfers.js"></script>
 
 <script type="text/javascript">
-  window.resizeTo( 512, 465 );
+  window.resizeTo( 512, 485 );
   setBalance();
 </script>
 

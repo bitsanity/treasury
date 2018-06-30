@@ -61,6 +61,13 @@ function newProposal()
     document.getElementById( "amtval" ).style.backgroundColor = "yellow";
     return;
   }
+  if (eref && eref.length > 0)
+    document.getElementById( "erefval" ).style.backgroundColor = "white";
+  else
+  {
+    document.getElementById( "erefval" ).style.backgroundColor = "yellow";
+    return;
+  }
 
   TRSCON.proposal( recip, amt, eref,
                    {from: cbase, gas:500000, gasPrice: MYGASPRICE} );

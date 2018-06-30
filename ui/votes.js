@@ -18,7 +18,7 @@ function doVotes()
       if (logs[ii].event == 'Proposal' ) {
         spends[ '' + logs[ii].args.payee +
                 'Ξ' + logs[ii].args.amt +
-                'Ξ' + logs[ii].args.eref ] = logs[ii].args.amt;
+                'Ξ' + logs[ii].args.eref ] += logs[ii].args.amt;
       }
       else if (logs[ii].event == 'Spent') {
         spends[ '' + logs[ii].args.payee +
@@ -36,7 +36,6 @@ function doVotes()
     for (var s in spends)
     {
       let v = parseInt(spends[s]);
-      console.log( 'v: ', v );
 
       if (v > 0)
       {
@@ -48,8 +47,6 @@ function doVotes()
         PAYEES[index] = vals[0];
         AMTS[index] = vals[1];
         EREFS[index] = vals[2];
-
-        console.log( PAYEES[index], ' ', AMTS[index], ' ', EREFS[index] );
 
         op.value = 0;
         index++;
@@ -63,7 +60,7 @@ function doVotes()
 function proposalSelected()
 {
   let ix = document.getElementById( "outselect" ).selectedIndex;
-  console.log( 'proposalSelected( ' + ix + ' )' );
+
   if (-1 == ix) return;
 
   document.getElementById( "t3recipfield" ).innerHTML = PAYEES[ix];
@@ -89,16 +86,13 @@ function approveSpend()
 
   let cbase = ACCTS.options[ACCTS.selectedIndex].text;
 
-  console.log( PAYEES[ix], ':', AMTS[ix], ':', EREFS[ix] );
-
   TRSCON.approve( PAYEES[ix], AMTS[ix], EREFS[ix],
                   {from: cbase, gas:250000, gasPrice: MYGASPRICE} );
 
-  setTimeout( doVotes(), 1000 );
   document.getElementById( "t3recipfield" ).innerHTML = '      ';
   document.getElementById( "t3amtfield" ).innerHTML = '      ';
   document.getElementById( "t3ereffield" ).innerHTML = '      ';
 
-  setTimeout( setSCA(), 1000 );
+  setTimeout( doVotes(), 1000 );
 }
 
