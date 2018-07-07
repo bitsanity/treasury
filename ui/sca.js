@@ -1,18 +1,9 @@
-const deny = /[^0x123456789abcdefABCDEF]/;
-
-function isSCA()
-{
-  return sca.startsWith("0x")
-         && !deny.test(sca)
-         && sca.length == 42;
-}
-
-function setSCA()
+async function setSCA()
 {
   let scaf = document.getElementById("scafield");
   let sca = scaf.value.toLowerCase();
 
-  if (!isSCA(sca))
+  if (!ΞisSCA(sca))
   {
     scaf.style.backgroundColor = "yellow";
     return;
@@ -20,12 +11,10 @@ function setSCA()
 
   scaf.style.backgroundColor = "white";
 
-  TRSCON = getTreasury( sca );
+  ΞgetTreasury( sca );
   actionSelected();
 
-  web3.eth.getBalance( sca, (err,res) => {
-    if (!err) {
-      document.getElementById("scabalvalue").innerHTML = res;
-    }
-  } );
+  let res = await Ξbalance( sca );
+
+  document.getElementById("scabalvalue").innerHTML = res;
 }

@@ -1,47 +1,43 @@
-function doSpends()
+async function doSpends()
 {
   let spends = {}; // list of ("<toaddr> <amtwei> <extref>":"owing") properties
 
-  let events = TRSCON.allEvents( {fromBlock:0,toBlock:'latest'} );
-  events.get( (error, logs) => {
+  let logs = await τallEvents();
 
-    for( var ii = 0; ii < logs.length; ii++)
-    {
-      if (logs[ii].event == 'Proposal' ) {
-        spends[ '' + logs[ii].args.payee +
-                ' ' + logs[ii].args.amt +
-                ' ' + logs[ii].args.eref ] = logs[ii].args.amt;
-      }
-      else if (logs[ii].event == 'Spent') {
-        spends[ '' + logs[ii].args.payee +
-                ' ' + logs[ii].args.amt +
-                ' ' + logs[ii].args.eref ] -= logs[ii].args.amt;
-      }
+  for( var ii = 0; ii < logs.length; ii++)
+  {
+    if (logs[ii].event == 'Proposal' ) {
+      spends[ '' + logs[ii].returnValues.payee +
+              ' ' + logs[ii].returnValues.amt +
+              ' ' + logs[ii].returnValues.eref ] = logs[ii].returnValues.amt;
     }
-
-    let spendsstr = '';
-    for (var s in spends)
-    {
-      let owing = spends[s];
-      if (parseInt(owing) > 0)
-        spendsstr += s + '\n';
+    else if (logs[ii].event == 'Spent') {
+      spends[ '' + logs[ii].returnValues.payee +
+              ' ' + logs[ii].returnValues.amt +
+              ' ' + logs[ii].returnValues.eref ] -= logs[ii].returnValues.amt;
     }
-    document.getElementById( "spendslist" ).value = spendsstr;
+  }
 
-    let trs = amTreasurer();
-    document.getElementById( "proposecommand" ).disabled = !trs;
-  } );
+  let spendsstr = '';
+  for (var s in spends)
+  {
+    let owing = spends[s];
+    if (parseInt(owing) > 0)
+      spendsstr += s + '\n';
+  }
+
+  document.getElementById( "spendslist" ).value = spendsstr;
+  var amT = await amTreasurer();
+  document.getElementById( "proposecommand" ).disabled = !amT;
 }
 
-function newProposal()
+async function newProposal()
 {
-  if (!amTreasurer())
+  if (!await amTreasurer())
   {
     document.getElementById( "proposecommand" ).disabled = true;
     return;
   }
-
-  let cbase = ACCTS.options[ACCTS.selectedIndex].text;
 
   let recip = document.getElementById( "recipval" ).value;
   let amt = document.getElementById( "amtval" ).value;
@@ -69,8 +65,7 @@ function newProposal()
     return;
   }
 
-  TRSCON.proposal( recip, amt, eref,
-                   {from: cbase, gas:500000, gasPrice: MYGASPRICE} );
+  τproposal( recip, amt, eref );
 
   document.getElementById( "recipval" ).value = '';
   document.getElementById( "amtval" ).value = '';
@@ -79,7 +74,7 @@ function newProposal()
   doSpends();
 }
 
-function searchProposals()
+async function searchProposals()
 {
   document.getElementById( "spendslist" ).value = 'Search Results:\n';
 
@@ -87,31 +82,28 @@ function searchProposals()
   let amt = document.getElementById( "amtval" ).value;
   let eref = document.getElementById( "erefval" ).value;
 
-  var events = TRSCON.allEvents( {fromBlock:0,toBlock:'latest'} );
-  events.get( (error, logs) => {
+  var logs = await τallEvents();
 
-    for( var ii = 0; ii < logs.length; ii++ )
-    {
-      if (    logs[ii].event == 'Proposal'
-           || logs[ii].event == 'Spent' ) {
+  for( var ii = 0; ii < logs.length; ii++ )
+  {
+    if (    logs[ii].event == 'Proposal'
+         || logs[ii].event == 'Spent' ) {
 
-        if (eref && eref.length > 0 && eref != logs[ii].args.eref)
-          continue;
+      if (eref && eref.length > 0 && eref != logs[ii].returnValues.eref)
+        continue;
 
-        if (recip && recip.length > 0 && recip != logs[ii].args.payee)
-          continue;
+      if (recip && recip.length > 0 && recip != logs[ii].returnValues.payee)
+        continue;
 
-        if (amt && amt.length > 0 && amt != logs[ii].args.amt)
-          continue;
+      if (amt && amt.length > 0 && amt != logs[ii].returnValues.amt)
+        continue;
 
-        document.getElementById( "spendslist" ).value =
-          document.getElementById( "spendslist" ).value +
-            logs[ii].args.payee + ' ' +
-            logs[ii].args.amt   + ' '  +
-            logs[ii].args.eref + '\n';
-      }
+      document.getElementById( "spendslist" ).value =
+        document.getElementById( "spendslist" ).value +
+          logs[ii].returnValues.payee + ' ' +
+          logs[ii].returnValues.amt   + ' '  +
+          logs[ii].returnValues.eref + '\n';
     }
-
-  } );
+  }
 }
 

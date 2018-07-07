@@ -2,97 +2,97 @@ var PAYEES = [];
 var AMTS = [];
 var EREFS = [];
 
-function doVotes()
+async function doVotes()
 {
-  PAYEES = [];
-  AMTS = [];
-  EREFS = [];
+  this.PAYEES = [];
+  this.AMTS = [];
+  this.EREFS = [];
 
-  let spends = {}; // list of ("<toaddr>Ξ<amtwei>Ξ<extref>":"owing") properties
+  var spends = {}; // list of ("<toaddr>Ξ<amtwei>Ξ<extref>":"owing") properties
 
-  let events = TRSCON.allEvents( {fromBlock:0,toBlock:'latest'} );
-  events.get( (error, logs) => {
+  var logs = await τallEvents();
 
-    for( var ii = 0; ii < logs.length; ii++)
+  for( var ii = 0; ii < logs.length; ii++)
+  {
+    if (logs[ii].event == 'Proposal' || logs[ii].event == 'Spent' )
     {
+      let key = '' + logs[ii].returnValues.payee +
+                'Ξ' + logs[ii].returnValues.amt +
+                'Ξ' + logs[ii].returnValues.eref;
+
       if (logs[ii].event == 'Proposal' ) {
-        spends[ '' + logs[ii].args.payee +
-                'Ξ' + logs[ii].args.amt +
-                'Ξ' + logs[ii].args.eref ] += logs[ii].args.amt;
+        if (null == spends[key])
+          spends[key] = logs[ii].returnValues.amt;
+        else
+          spends[key] += logs[ii].returnValues.amt;
       }
       else if (logs[ii].event == 'Spent') {
-        spends[ '' + logs[ii].args.payee +
-                'Ξ' + logs[ii].args.amt +
-                'Ξ' + logs[ii].args.eref ] -= logs[ii].args.amt;
+        spends[key] -= logs[ii].returnValues.amt;
       }
     }
+  }
 
-    var outlist = document.getElementById( "outselect" );
+  var outlist = document.getElementById( "outselect" );
 
-    while (outlist.hasChildNodes())
-      outlist.removeChild( outlist.firstChild );
+  while (outlist.hasChildNodes())
+    outlist.removeChild( outlist.firstChild );
 
-    let index = 0;
-    for (var s in spends)
+  let index = 0;
+  for (var s in spends)
+  {
+    let v = parseInt(spends[s]);
+
+    if (v > 0)
     {
-      let v = parseInt(spends[s]);
+      let op = document.createElement("option");
+      op.text = ' ' + index + ' ';
+      outlist.add(op);
 
-      if (v > 0)
-      {
-        let op = document.createElement("option");
-        op.text = ' ' + index + ' ';
-        outlist.add(op);
+      let vals = s.split('Ξ');
+      this.PAYEES[index] = vals[0];
+      this.AMTS[index] = vals[1];
+      this.EREFS[index] = vals[2];
 
-        let vals = s.split('Ξ');
-        PAYEES[index] = vals[0];
-        AMTS[index] = vals[1];
-        EREFS[index] = vals[2];
-
-        op.value = 0;
-        index++;
-      }
+      op.value = 0;
+      index++;
     }
+  }
 
-    proposalSelected();
-  } );
+  proposalSelected();
 }
 
 function proposalSelected()
 {
   let ix = document.getElementById( "outselect" ).selectedIndex;
 
-  if (-1 == ix) return;
-
-  document.getElementById( "t3recipfield" ).innerHTML = PAYEES[ix];
-  document.getElementById( "t3amtfield" ).innerHTML = AMTS[ix];
-  document.getElementById( "t3ereffield" ).innerHTML = EREFS[ix];
-
-  let cbase = ACCTS.options[ACCTS.selectedIndex].text;
-  var amtrustee = false;
-
-  for (var t in TRUSTEES)
+  if (-1 == ix)
   {
-    if (t == cbase && !TRUSTEES[t])
-      amtrustee = true;
+    let note = "select proposal above...";
+    document.getElementById( "t3recipfield" ).innerHTML = note;
+    document.getElementById( "t3amtfield" ).innerHTML = note;
+    document.getElementById( "t3ereffield" ).innerHTML = note;
+  }
+  else
+  {
+    document.getElementById( "t3recipfield" ).innerHTML = PAYEES[ix];
+    document.getElementById( "t3amtfield" ).innerHTML = AMTS[ix];
+    document.getElementById( "t3ereffield" ).innerHTML = EREFS[ix];
   }
 
-  document.getElementById( "approvebtn" ).disabled = !amtrustee;
+  document.getElementById( "approvebtn" ).disabled = !amTrustee();
 }
 
-function approveSpend()
+async function approveSpend()
 {
   let ix = document.getElementById( "outselect" ).selectedIndex;
   if (-1 == ix) return;
 
-  let cbase = ACCTS.options[ACCTS.selectedIndex].text;
-
-  TRSCON.approve( PAYEES[ix], AMTS[ix], EREFS[ix],
-                  {from: cbase, gas:250000, gasPrice: MYGASPRICE} );
+  await τapprove ( this.PAYEES[ix], this.AMTS[ix], this.EREFS[ix] );
 
   document.getElementById( "t3recipfield" ).innerHTML = '      ';
   document.getElementById( "t3amtfield" ).innerHTML = '      ';
   document.getElementById( "t3ereffield" ).innerHTML = '      ';
 
-  setTimeout( doVotes(), 1000 );
+  await doVotes();
 }
 

@@ -1,14 +1,26 @@
-var TRUSTEES;
+var TRUSTEES = {};
 
-function amTreasurer() {
+async function amTreasurer() {
   let cb = ACCTS.options[ACCTS.selectedIndex].text;
-  let trs = TRSCON.treasurer();
+  let trs = await τgetTreasurer();
   return cb == trs;
 }
 
-function actionSelected() {
+function amTrustee() {
+  let cb = getCoinbase();
+
+  for (var t in this.TRUSTEES) {
+    console.log( 't: ' + t + ', cb: ' + cb );
+    if (cb == t)
+      return true;
+  }
+
+  return false;
+}
+
+async function actionSelected() {
   let ix = document.getElementById("actions").selectedIndex;
-  let amtr = amTreasurer();
+  let amtr = await amTreasurer();
 
   document.getElementById("action1").disabled = !amtr;
   document.getElementById("actioncommand").disabled = !amtr;
@@ -16,7 +28,6 @@ function actionSelected() {
 }
 
 function performAction() {
-  let cbase = ACCTS.options[ACCTS.selectedIndex].text;
   let ix = document.getElementById("actions").selectedIndex;
 
   let uaddr1 = document.getElementById("action1").value;
@@ -37,25 +48,10 @@ function performAction() {
   else
     document.getElementById("action2").style.backgroundColor = "white";
 
-  if (ix == "0") {
-    console.log( 'adding ' + uaddr1 );
-    TRSCON.add( uaddr1, {from: cbase, gas:100000, gasPrice: MYGASPRICE} );
-  }
-  else if (ix == "1") {
-    console.log( 'flagging ' + uaddr1 );
-    TRSCON.flag( uaddr1, true,
-                 {from: cbase, gas:100000, gasPrice: MYGASPRICE} );
-  }
-  else if (ix == "2") {
-    console.log( 'unflagging ' + uaddr1 );
-    TRSCON.flag( uaddr1, false,
-                 {from: cbase, gas:100000, gasPrice: MYGASPRICE} );
-  }
-  else if (ix == "3") {
-    console.log( 'replacing ' + uaddr1 + ' with ' + uaddr2 );
-    TRSCON.replace( uaddr1, uaddr2,
-                    {from: cbase, gas:100000, gasPrice: MYGASPRICE} );
-  }
+  if (ix == "0") τadd( uaddr1 );
+  else if (ix == "1") τflag( uaddr1, true );
+  else if (ix == "2") τflag( uaddr1, false );
+  else if (ix == "3") τreplace( uaddr1, uaddr2 );
 
   document.getElementById("actions").selectedIndex = 0;
   document.getElementById("action1").value = "";
@@ -65,44 +61,39 @@ function performAction() {
   setTimeout( doMembers(), 1000 );
 }
 
-function doMembers()
+async function doMembers()
 {
-  let trs = TRSCON.treasurer();
+  let trs = await τgetTreasurer();
+
   document.getElementById( "treasurerval" ).value = trs;
 
-  TRUSTEES = {}; // set of ("address" : "isFlagged") tuples
+  var logs = await τallEvents();
 
-  var events = TRSCON.allEvents({fromBlock:0,toBlock:'latest'});
-  events.get( (error, logs) => {
+  this.TRUSTEES = {};
 
-    console.log( "log has " + logs.length + " entries" );
+  for( var ii = 0; ii < logs.length; ii++) {
 
-    for( var ii = 0; ii < logs.length; ii++) {
-
-      console.log( logs[ii] );
-
-      if (logs[ii].event == 'Added' ) {
-        TRUSTEES[ logs[ii].args.trustee ] = false;
-      }
-      else if (logs[ii].event == 'Replaced') {
-        delete TRUSTEES[ logs[ii].args.older ];
-        TRUSTEES[ logs[ii].args.newer ] = false;
-      }
-      else if (logs[ii].event == 'Flagged') {
-        TRUSTEES[ logs[ii].args.trustee ] = logs[ii].args.isRaised;
-      }
+    if (logs[ii].event == 'Added' ) {
+      this.TRUSTEES[ logs[ii].returnValues.trustee ] = false;
+    }
+    else if (logs[ii].event == 'Replaced') {
+      delete this.TRUSTEES[ logs[ii].returnValues.older ];
+      this.TRUSTEES[ logs[ii].returnValues.newer ] = false;
+    }
+    else if (logs[ii].event == 'Flagged') {
+      this.TRUSTEES[ logs[ii].returnValues.trustee ] =
+        logs[ii].returnValues.isRaised;
     }
 
     let trslist = '';
-    for( var addrs in TRUSTEES ) {
-      console.log( addrs + ' ' + TRUSTEES[addrs] );
-      if (TRUSTEES[addrs])
+    for( var addrs in this.TRUSTEES ) {
+      if (this.TRUSTEES[addrs])
         trslist += addrs.toString() + " (FLAGGED)\n";
       else
         trslist += addrs.toString() + "\n";
     }
 
     document.getElementById( "trusteeslist" ).value = trslist;
-  } );
+  }
 }
 

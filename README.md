@@ -1,5 +1,11 @@
 # treasury
 
+UPDATE:
+ * added support to manage TOKENS as well as ETHER assets
+ * removed for-loops to reduce gas consumption
+ * major overhaul ui to use release 1.0.0 web3.js API
+ * refactored smartcontract-access logic in one file
+
 [Overview and UI Demo (VIDEO)](https://youtu.be/RsVJvRUNgrw)
 
 ```

@@ -1,4 +1,6 @@
 {
+  "chromium-args" : "--enable-logging=stderr",
+
   "name": "ui",
   "version": "0.1.0",
   "description": "UI for Treasury smart contract",

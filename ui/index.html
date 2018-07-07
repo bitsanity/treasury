@@ -45,7 +45,7 @@
 <button class="tablinks"
   onclick="openTab(event, 'Spends');doSpends();">Spends</button>
 <button class="tablinks"
-  onclick="openTab(event, 'Votes');doVotes();proposalSelected();">Votes</button>
+  onclick="openTab(event, 'Votes');doVotes();">Votes</button>
 <button class="tablinks"
   onclick="openTab(event, 'Tokens');doTokens();">Tokens</button>
 <button class="tablinks"
@@ -203,7 +203,7 @@
 <div id="xferlabel" class="label">Approve Transfer: </div>
 <p/>
 <div id="xferidlabel" class="label">ID:</div>
-<select id="xferselect" onchange="transferSelected();" ></select>
+<select id="xferselect" onchange="transferSelected();"></select>
 <p/>
 <table cellspacing=3>
 <tr>
@@ -238,9 +238,12 @@
 
 <script type="text/javascript" src="./web3.min.js"></script>
 
-<script type="text/javascript" src="connect.js"></script>
+<script type="text/javascript" src="Ethereum.js"></script>
+<script type="text/javascript">
+  Ξconnect();
+</script>
+
 <script type="text/javascript" src="etherbase.js"></script>
-<script type="text/javascript" src="balance.js"></script>
 <script type="text/javascript" src="sca.js"></script>
 <script type="text/javascript" src="tabs.js"></script>
 <script type="text/javascript" src="members.js"></script>
@@ -249,9 +252,11 @@
 <script type="text/javascript" src="tokens.js"></script>
 <script type="text/javascript" src="transfers.js"></script>
 
+<script type="text/javascript" src="Treasury.js"></script>
+
 <script type="text/javascript">
+  etherbaseinit();
   window.resizeTo( 512, 485 );
-  setBalance();
 </script>
 
 </body>

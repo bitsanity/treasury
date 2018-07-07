@@ -111,7 +111,9 @@ contract Treasury is owned {
 
   function replace( address older, address newer ) public onlyTreasurer {
     require(    trustees[older] != uint8(0)
-             && newer != address(0) );
+             && newer != address(0)
+             && newer != address(this)
+             && newer != treasurer );
 
     trustees[older] = uint8(0);
     trustees[newer] = uint8(1);
@@ -164,6 +166,7 @@ contract Treasury is owned {
       revert();
 
     proposals[key].approvals[msg.sender] = 1;
+    proposals[key].count++;
     emit Approved( msg.sender, _payee, _wei, _eref );
 
     if ( proposals[key].count > (trusteeCount / 2) )
@@ -189,6 +192,7 @@ contract Treasury is owned {
       revert();
 
     tokprops[key].approvals[msg.sender] = 1;
+    tokprops[key].count++;
     emit TransferApproved( msg.sender, _toksca, _to, _amount, _eref );
 
     if ( tokprops[key].count > (trusteeCount / 2) )
