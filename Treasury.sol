@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.3;
 
 // ---------------------------------------------------------------------------
 // Treasury smart contract. Owner (Treasurer) is only account that can submit
@@ -18,7 +18,7 @@ interface Token {
 contract owned {
   address public treasurer;
 
-  function owned() public { treasurer = msg.sender; }
+  constructor() public { treasurer = msg.sender; }
 
   function setTreasurer( address newTreasurer ) public onlyTreasurer
   { treasurer = newTreasurer; }
@@ -64,11 +64,11 @@ contract Treasury is owned {
   // 1 : has approved
 
   struct SpendProp {
-    address   payee;
-    uint      amount;
-    string    eref;
+    address payee;
+    uint    amount;
+    string  eref;
     mapping( address => uint8 ) approvals;
-    uint count;
+    uint    count;
   }
 
   struct TransferProp {
@@ -89,9 +89,9 @@ contract Treasury is owned {
   mapping( address => uint8 ) trustees;
   uint trusteeCount;
 
-  function Treasury() public {}
+  constructor() public {}
 
-  function() public payable {}
+  function() external payable {}
 
   function add( address trustee ) public onlyTreasurer {
     require(    trustee != address(0)
@@ -120,12 +120,12 @@ contract Treasury is owned {
     emit Replaced( older, newer );
   }
 
-  function proposal( address _payee, uint _wei, string _eref )
+  function proposal( address _payee, uint _wei, string memory _eref )
   public onlyTreasurer
   {
     validate( _payee, _wei, _eref );
 
-    bytes32 key = keccak256( _payee, _wei, _eref );
+    bytes32 key = keccak256( abi.encodePacked(_payee, _wei, _eref) );
     proposals[key].payee = _payee;
     proposals[key].amount = _wei;
     proposals[key].eref = _eref;
@@ -136,12 +136,12 @@ contract Treasury is owned {
   function proposeTransfer( address _toksca,
                             address _to,
                             uint _amount,
-                            string _eref )
+                            string memory _eref )
   public onlyTreasurer
   {
     validate( _to, _amount, _eref );
 
-    bytes32 key = keccak256( _toksca, _to, _amount, _eref );
+    bytes32 key = keccak256( abi.encodePacked(_toksca, _to, _amount, _eref) );
     tokprops[key].toksca = _toksca;
     tokprops[key].to = _to;
     tokprops[key].amount = _amount;
@@ -150,13 +150,13 @@ contract Treasury is owned {
     emit TransferProposal( _toksca, _to, _amount, _eref );
   }
 
-  function approve( address _payee, uint _wei, string _eref ) public
+  function approve( address _payee, uint _wei, string memory _eref ) public
   {
     validate( _payee, _wei, _eref );
     require( trustees[msg.sender] == 1 );
 
     // fetch matching proposal. if already actioned amount will be zero
-    bytes32 key = keccak256( _payee, _wei, _eref );
+    bytes32 key = keccak256( abi.encodePacked(_payee, _wei, _eref) );
 
     // check proposal exists and not already actioned (amount would be 0)
     require( proposals[key].amount > 0 );
@@ -171,7 +171,8 @@ contract Treasury is owned {
 
     if ( proposals[key].count > (trusteeCount / 2) )
     {
-      proposals[key].payee.transfer(proposals[key].amount); // throws if error
+      address payable payee = address(uint160(proposals[key].payee));
+      payee.transfer(proposals[key].amount); // throws if error
       proposals[key].amount = 0; // stop double spend
       emit Spent( _payee, _wei, _eref );
     }
@@ -180,10 +181,10 @@ contract Treasury is owned {
   function approveTransfer( address _toksca,
                             address _to,
                             uint    _amount,
-                            string  _eref ) public
+                            string  memory _eref ) public
   {
     validate( _to, _amount, _eref );
-    bytes32 key = keccak256( _toksca, _to, _amount, _eref );
+    bytes32 key = keccak256( abi.encodePacked(_toksca, _to, _amount, _eref) );
 
     require(    trustees[msg.sender] == uint8(1)
              && tokprops[key].amount > 0 );
@@ -204,7 +205,8 @@ contract Treasury is owned {
     }
   }
 
-  function validate( address _to, uint _amount, string _eref ) pure internal
+  function validate( address _to, uint _amount, string memory _eref )
+  pure internal
   {
     bytes memory erefb = bytes(_eref);
     require(    _to != address(0)

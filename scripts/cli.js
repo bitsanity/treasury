@@ -56,6 +56,7 @@ function shorten(addr) {
 }
 
 function printEvent(evt) {
+
   if (evt.event == 'Added' ) {
     console.log( 'Added:\n\tTrustee: ' + shorten(evt.raw.topics[1] ) );
   }
@@ -205,7 +206,7 @@ web3.eth.getAccounts().then( (res) => {
       con
         .deploy({data:getBinary()} )
         .send({from: eb, gas: 1452525, gasPrice: MYGASPRICE}, (err, txhash) => {
-          if (txhash) console.log( "send txhash: ", txhash );
+          if (err) console.log( err );
         } )
         .on('error', (err) => { console.log("err: ", err); })
         .on('transactionHash', (h) => { console.log( "hash: ", h ); } )
@@ -221,16 +222,13 @@ web3.eth.getAccounts().then( (res) => {
       let con = new web3.eth.Contract( getStubABI() );
       con
         .deploy({data:getStubBinary()} )
-        .send({from: eb, gas: 500000, gasPrice: MYGASPRICE}, (err, txhash) => {
-          if (txhash) console.log( "send txhash: ", txhash );
-        } )
+        .send({from: eb, gas: 500000, gasPrice: MYGASPRICE})
         .on('error', (err) => { console.log("err: ", err); })
         .on('transactionHash', (h) => { console.log( "hash: ", h ); } )
         .on('receipt', (r) => { console.log( 'rcpt: ' + r.contractAddress); } )
         .on('confirmation', (cn, rcpt) => { console.log( 'cn: ', cn ); } )
         .then( (nin) => {
-          console.log( "SCA", nin.options.address );
-          process.exit(0);
+          console.log( "SCA", nin.options.address )
         } );
     }
     else
@@ -242,40 +240,41 @@ web3.eth.getAccounts().then( (res) => {
         let addr = process.argv[5];
         checkAddr(addr);
         con.methods.setTreasurer( addr )
-                   .send( {from: eb, gas: 30000, gasPrice: MYGASPRICE} );
+                   .send( {from: eb, gas: 30000, gasPrice: MYGASPRICE} )
+                .catch( err => { console.log } );
       }
 
       if (cmd == 'shutdown')
       {
         console.log( 'for your protection: remove comment to closedown()' );
         con.methods.closedown()
-                   .send( {from: eb, gas: 21000, gasPrice: MYGASPRICE} );
+                   .send( {from: eb, gas: 21000, gasPrice: MYGASPRICE} )
+                .catch( err => { console.log } );
       }
 
       if (cmd == 'events')
       {
-        console.log( "events:" );
-
         con.getPastEvents('allEvents', {fromBlock: 0, toBlock: 'latest'})
            .then( (events) =>
         {
-          console.log( "events.length is " + events.length );
-
           for (var ii = 0; ii < events.length; ii++) {
             printEvent( events[ii] );
           } // end foreach event
-        }); // end then
+        })  // end then
+        .catch( err => { console.log } );
       } // end if events command
 
       if (cmd == 'variables')
       {
         con.methods.treasurer().call().then( (res) => {
-          console.log( "owner = ", res );
-        } );
+          console.log( "treasurer = ", res )
+        } )
+        .catch( err => { console.log } );
 
         web3.eth.getBalance( sca ).then( (bal) => {
-          console.log( "balance (wei): " + bal );
-        } );
+          console.log( "balance (wei): " + bal )
+        } )
+        .catch( err => { console.log } );
       }
 
       if (cmd == 'add')
@@ -283,7 +282,8 @@ web3.eth.getAccounts().then( (res) => {
         let addr = process.argv[5];
         checkAddr(addr);
         con.methods.add( addr )
-                   .send( {from: eb, gas: 100000, gasPrice: MYGASPRICE} );
+                   .send( {from: eb, gas: 100000, gasPrice: MYGASPRICE} )
+                .catch( err => { console.log } );
       }
       if (cmd == 'flag')
       {
@@ -293,7 +293,8 @@ web3.eth.getAccounts().then( (res) => {
         let isRaised = (arg == 'true' || arg.startsWith('t') );
 
         con.methods.flag( addr, isRaised )
-                   .send( {from: eb, gas: 100000, gasPrice: MYGASPRICE} );
+                   .send( {from: eb, gas: 100000, gasPrice: MYGASPRICE} )
+                .catch( err => { console.log } );
       }
       if (cmd == 'replace')
       {
@@ -302,17 +303,21 @@ web3.eth.getAccounts().then( (res) => {
         let newaddr = process.argv[6];
         checkAddr(newaddr);
         con.methods.replace( oldaddr, newaddr )
-                   .send( {from: eb, gas: 100000, gasPrice: MYGASPRICE} );
+                   .send( {from: eb, gas: 100000, gasPrice: MYGASPRICE} )
+                .catch( err => { console.log } );
       }
       if (cmd == 'proposal')
       {
         let payee = process.argv[5];
         checkAddr( payee );
-        let wei = parseInt( process.argv[6] );
-        let eref = process.argv[6];
+        let wei = process.argv[6];
+        let eref = process.argv[7];
+
+        console.log( 'proposal: ' + payee + " " + wei + " " + eref );
 
         con.methods.proposal( payee, wei, eref )
-                   .send( {from: eb, gas: 120000, gasPrice: MYGASPRICE} );
+                   .send( {from: eb, gas: 120000, gasPrice: MYGASPRICE} )
+                .catch( (err) => { console.log(err); } );
       }
       if (cmd == 'proposeTransfer')
       {
@@ -324,17 +329,19 @@ web3.eth.getAccounts().then( (res) => {
         let eref = process.argv[8];
 
         con.methods.proposeTransfer( tokensca, transferee, qty, eref )
-                   .send( {from: eb, gas: 120000, gasPrice: MYGASPRICE} );
+                   .send( {from: eb, gas: 120000, gasPrice: MYGASPRICE} )
+                .catch( err => { console.log } );
       }
       if (cmd == 'approve')
       {
         let payee = process.argv[5];
         checkAddr( payee );
-        let wei = parseInt( process.argv[6] );
-        let eref = process.argv[6];
+        let wei = process.argv[6];
+        let eref = process.argv[7];
 
         con.methods.approve( payee, wei, eref )
-                   .send( {from: eb, gas: 120000, gasPrice: MYGASPRICE} );
+                   .send( {from: eb, gas: 120000, gasPrice: MYGASPRICE} )
+                .catch( err => { console.log(err); } );
       }
       if (cmd == 'approveTransfer')
       {
@@ -342,11 +349,12 @@ web3.eth.getAccounts().then( (res) => {
         checkAddr( tokensca );
         let transferee = process.argv[6]
         checkAddr( transferee );
-        let qty = parseInt( process.argv[7] );
+        let qty = process.argv[7];
         let eref = process.argv[8];
 
         con.methods.approveTransfer( tokensca, transferee, qty, eref )
-                   .send( {from: eb, gas: 120000, gasPrice: MYGASPRICE} );
+                   .send( {from: eb, gas: 120000, gasPrice: MYGASPRICE} )
+                .catch( (err) => { console.log(err) } );
       }
 
 //    process.exit(0);

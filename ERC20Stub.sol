@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.3;
 
 contract ERC20Stub
 {
@@ -9,9 +9,9 @@ contract ERC20Stub
   uint8  public decimals = uint8(18);
   uint   public totalSupply = 1e9;
 
-  function ERC20Stub() public {}
+  constructor() public {}
 
-  function balanceOf( address _who ) public constant returns (uint) {
+  function balanceOf( address _who ) view public returns (uint) {
     if (totalSupply > 0 && _who != address(0))
       return 1234567890;
 
